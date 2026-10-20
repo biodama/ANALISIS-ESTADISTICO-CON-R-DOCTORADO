@@ -249,6 +249,305 @@ margin.table(table(datos$nivel.estudios),margin=1)
 prop.table(table(datos$nivel.estudios))
 
 
+########################################################
+########################################################
+
+
+ASOCIADOS EN SEXO (H/M) Y EL PESO (NUMERICA) (REGRESION)
+
+COMPARANDO EL PESO ENTRE HOMBRES Y MUJERES (TECNICAS DE COMPARACION)
+
+ANALISIS DESCRIPTIVOS (TECNICAS DESCRIPTIVAS Y TÉCNICAS INFERENCIALES DE COMPARACION (TESTS...))
+
+
+########################################################
+########################################################
+
+
+########################################################
+########################################################
+# Analisis de comparacion
+########################################################
+########################################################
+
+rm(list=ls())
+gc()
+
+setwd("/Users/pfernandezn/Desktop/ANALISIS_ESTADISTICO_CON_R_DOCTORADO_2026/DATOS/")
+
+load("datos.curso1.RData")
+
+
+teorico_datos <- rnorm(n=10000, mean = mean(datos$"peso"), sd = sd(datos$"peso"))
+par(mfrow=c(1,2))
+hist(datos$"peso",main="Muestral datos")
+hist(teorico_datos,main="Teórico datos")
+
+
+mujeres<- datos[datos$"sexo"%in%"Mujer",]
+mean(mujeres$"peso")
+sd(mujeres$"peso")
+teorico_mujeres<- rnorm(n=10000, mean = mean(mujeres$"peso"), sd = sd(mujeres$"peso"))
+par(mfrow=c(1,2))
+hist(mujeres$"peso",main="Muestral")
+hist(teorico_mujeres,main="Teórico")
+
+
+res <- t.test(x=mujeres$"peso",conf.level = 0.95)
+class(res)
+names(res)
+
+hombres <- datos[datos$sexo=="Hombre",]
+mujeres <- datos[datos$sexo=="Mujer",]
+
+mean(hombres$"peso")-mean(mujeres$"peso")
+
+res<-t.test(hombres$"peso",mujeres$"peso", conf.level = 0.95)
+res
+names(res)
+res$"p.value"
+
+
+res<-t.test(hombres$"peso",mujeres$"peso", conf.level = 0.95,var.equal=TRUE)
+res$"p.value"
+
+
+res<-t.test(hombres$"peso",mu = 90,sd=1, conf.level = 0.95)
+res
+
+res_dos_colas<-t.test(hombres$"peso",mu = 79.80,sd=1,
+                      conf.level = 0.95,alternative = c("two.sided"))
+res_dos_colas$"p.value"
+
+
+res_less<-t.test(hombres$"peso",mu = 79.80 ,sd=1,
+                 conf.level = 0.95,alternative = c("less"))
+res_less$"p.value"
+
+
+res_less<-t.test(hombres$"peso",mu = 79.80 ,sd=1,
+                 conf.level = 0.95,alternative = c("greater"))
+res_less$"p.value"
+
+# Asunciones
+
+shapiro.test(hombres$"peso")
+
+shapiro.test(mujeres$"peso")
+
+var.test(x=hombres$"peso",y=mujeres$"peso")
+
+
+# test no paremetricos
+
+res<-wilcox.test(hombres$"peso",mujeres$"peso")
+res
+
+res<-wilcox.test(hombres$"peso",mu=79.80)
+res
+
+res<-t.test(hombres$"peso",mu=79.80)
+res
+
+# Mas de dos  grupos
+
+anova(lm(hombres$"peso"~hombres$"nivel.estudios"))
+pairwise.t.test(x=hombres$"peso",g=as.factor(hombres$"nivel.estudios"),p.adjust="BH")
+
+
+shapiro.test(hombres$"peso"[hombres$"nivel.estudios"%in%"Alto"])
+
+shapiro.test(hombres$"peso"[hombres$"nivel.estudios"%in%"Medio"])
+
+shapiro.test(hombres$"peso"[hombres$"nivel.estudios"%in%"Bajo"])
+
+bartlett.test(hombres$"peso" ~ hombres$"nivel.estudios") # en el limite
+
+
+kruskal.test(hombres$"peso"~hombres$"nivel.estudios")
+pairwise.wilcox.test(x=hombres$"peso",g=as.factor(hombres$"nivel.estudios"),p.adj="BH")
+
+#################################
+# COMPARACION PROPORCIONES
+#################################
+
+# Inferencia
+
+table(datos$"fumador",exclude=NULL)
+
+prop.table(table(datos$"fumador",exclude=NULL))
+
+prop.test(table(datos$"fumador",exclude=NULL)[2:1])
+
+prop.test(table(datos$"fumador",exclude=NULL)[2:1],correct = FALSE)
+
+
+# Comparar con un valor concreto
+
+prop.test(as.numeric(table(datos$"fumador"))[2] , 
+          dim(datos)[1] ,
+          0.40,
+          alternative="two.sided")
+          
+# Comparar la proporcion de fumadores entre hombres y mujeres
+
+table(datos$sexo,datos$fumador)
+
+table(datos$sexo,datos$fumador)[,c(2,1)]
+
+prop.table(table(datos$sexo,datos$fumador),1)
+
+prop.test(table(datos$sexo,datos$fumador)[,c(2,1)])
+
+prop.test(table(datos$sexo,datos$fumador)[,c(2,1)],correct=FALSE)
+
+
+# Compara la proporcion de fumadores entre los distintos niveles de estudios
+table(datos$nivel.estudios,datos$fumador)[c(2,3,1),c(2,1)]
+margin.table(table(datos$nivel.estudios,datos$fumador)[c(2,3,1),c(2,1)],1)
+
+# igual que el anova en variables cuantitativas
+prop.test(table(datos$nivel.estudios,datos$fumador)[c(2,3,1),c(2,1)])
+
+prop.trend.test(table(datos$nivel.estudios,datos$fumador)[c(2,3,1),c(2)],
+margin.table(table(datos$nivel.estudios,datos$fumador)[c(2,3,1),c(2,1)],1))
+
+
+
+############
+# TABLAS
+############
+
+# install.packages("gtsummary")
+
+library("gtsummary")
+
+datos1<-subset(datos,select=c(ID,altura,edad,sexo)) # centrada en variables numericas
+
+subset(datos1,select=-c(ID,sexo)) %>%
+tbl_summary()%>%
+
+
+subset(datos1,select=-c(ID)) %>%
+tbl_summary(by="sexo")%>%
+add_overall()
+
+
+subset(datos1,select=-c(ID)) %>%
+tbl_summary(by="sexo",statistic = all_continuous() ~ "{mean}")%>%
+add_overall()
+
+
+subset(datos1,select=-c(ID)) %>%
+tbl_summary(by="sexo",statistic = all_continuous() ~ "{mean}")%>%
+add_overall()%>%
+add_ci(pattern = "{stat} ({ci})")%>%
+add_p()
+
+subset(datos1,select=-c(ID)) %>%
+tbl_summary(by="sexo",statistic = all_continuous() ~ "{mean}")%>%
+add_overall()%>%
+add_ci(pattern = "{stat} ({ci})")%>%
+add_p(test = everything() ~ "t.test")
+
+
+subset(datos1,select=-c(ID)) %>%
+tbl_summary(by="sexo",statistic = all_continuous() ~ "{mean}")%>%
+add_overall()%>%
+add_ci(pattern = "{stat} ({ci})")%>%
+add_p(test = everything() ~ "t.test", test.args = all_tests("t.test") ~ list(var.equal = TRUE))
+
+
+datos2<-subset(datos,select=c(ID,diabetes,estado.civil,fumador)) # centrada en variables categoricas
+
+subset(datos2,select=-c(ID)) %>%
+tbl_summary()
+
+subset(datos2,select=-c(ID)) %>%
+tbl_summary(by="fumador")
+
+
+subset(datos2,select=-c(ID)) %>%
+tbl_summary(by="fumador")%>%
+add_p()
+
+
+datos3<-subset(datos,select=c(ID,altura,edad,sexo,diabetes,estado.civil,fumador)) # centrada en variables numericas
+
+subset(datos3,select=-c(ID)) %>%
+tbl_summary(by="sexo",statistic = all_continuous() ~ "{mean}")%>%
+add_overall()%>%
+add_ci(pattern = "{stat} ({ci})")%>%
+add_p()
+
+subset(datos3, select = -c(ID)) %>%
+  tbl_summary(by = "sexo",statistic = all_continuous() ~ "{mean}") %>%
+  add_overall() %>%
+  add_ci(pattern = "{stat} ({ci})") %>%
+  add_p(
+    test = list(
+      all_continuous() ~ "t.test"),
+    test.args = all_tests("t.test") ~ list(var.equal = TRUE)
+  )
+
+subset(datos3, select = -c(ID)) %>%
+  tbl_summary(
+    by = "sexo",
+    statistic = all_continuous() ~ "{mean}",
+    label = edad ~ "Age"
+  ) %>%
+  add_overall() %>%
+  add_ci(pattern = "{stat} ({ci})") %>%
+  add_p(
+    test = list(
+      all_continuous() ~ "t.test"
+    ),
+    test.args = all_tests("t.test") ~ list(var.equal = TRUE)
+  )
+
+
+# Combinar tablas
+
+tbl0<-subset(datos1,select=-c(ID,sexo)) %>%
+  tbl_summary(statistic = all_continuous() ~ "{mean}") %>%
+  add_ci(pattern = "{stat} ({ci})")
+
+tbl1<-subset(datos1,select=-c(ID)) %>%
+  tbl_summary(by="sexo",
+              statistic = all_continuous() ~ "{mean}")%>%
+  add_ci(pattern = "{stat} ({ci})")
+
+tbl2<-subset(datos1,select=-c(ID)) %>%
+  tbl_summary(by="sexo") %>%
+  add_p(test = everything() ~ "t.test")%>%
+  modify_column_hide(all_stat_cols())
+
+tbl3<-subset(datos1,select=-c(ID)) %>%
+  tbl_summary(by="sexo") %>%
+  add_p(test = everything() ~ "wilcox.test")%>%
+  modify_column_hide(all_stat_cols())
+
+tbl_final <- 
+  tbl_merge(list(tbl0,tbl1, tbl2, tbl3)) %>%
+  modify_spanning_header(everything() ~ NA)
+
+tbl_final
+
+# Exportacion
+
+setwd("/Users/pfernandezn/Desktop/")
+
+library("flextable")
+tf <- tempfile(fileext = ".docx")
+tf<-("tabla_exportar.docx")
+ft1 <- as_flex_table(tbl_final)
+save_as_docx(ft1, path = tf)
+
+library(flextable)
+tf <- tempfile(fileext = ".png")
+tf<-("tabla_resultados.png")
+ft1 <- as_flex_table(tbl_final)
+save_as_image(ft1, path = tf)
 
 
 
